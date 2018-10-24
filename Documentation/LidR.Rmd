@@ -1,0 +1,147 @@
+---
+title: "LidR Notebook"
+---
+
+#import library
+
+The installation of the package "EBImage" is bit tricky:
+
+https://github.com/aoles/EBImage
+Tried:   install.packages("BiocManager")
+Error:   package BiocManager is not available (for R version 3.4.4)
+
+https://stackoverflow.com/questions/37222603/i-want-to-use-ebimage-package-but-it-says-it-is-not-available-for-my-version-o
+Tried:    source("http://bioconductor.org/biocLite.R")
+Error:    compilation failed for package ‘fftwtools’
+          * removing‘/home/klk/R/x86_64-pc-linux-gnu-library/3.4/fftwtools’
+
+https://github.com/GuangchuangYu/ggtree/wiki/ggtree-installation 
+Tried:    On Ubuntu 16.04.1 LTS, you need to install:
+          sudo apt-get install libfftw3-3 libfftw3-dev libtiff5-dev
+
+Again Tried: source("http://bioconductor.org/biocLite.R")
+Message:  Bioconductor version 3.6 (BiocInstaller 1.28.0), ?biocLite for help. A new version of Bioconductor is available after installing the most recent version of R; see http://bioconductor.org/install
+
+Tried:    biocLite("EBImage")
+Message:  
+The downloaded source packages are in ‘/tmp/RtmppMRvER/downloaded_packages’ installation path not writeable, unable to update packages: codetools, foreign, lattice, spatial Old packages: 'callr', 'cli', 'commonmark', 'covr', 'data.table', 'digest', 'evaluate', 'fansi', 'htmlwidgets', 'later', 'link2GI', 'maptools', 'mapview', 'microbenchmark', 'mime', 'packcircles', 'pkgbuild', 'pkgload', 'R6', 'Rcpp', 'reprex', 'rgrass7', 'rstudioapi', 'spatstat.data', 'spatstat.utils', 'spData', 'testthat', 'tidyselect', 'tinytex', 'tweenr', 'units', 'webshot', 'xtable', 'xts', 'zoo' Update all/some/none? [a/s/n]:
+
+https://support.bioconductor.org/p/92247/
+https://support.bioconductor.org/p/111316/
+https://stackoverflow.com/questions/28546382/installed-directory-not-writable-cannot-update-packages-boot-class-kerns
+
+Terminal: 
+Tried:    sudo R
+          source("http://bioconductor.org/biocLite.R")
+          biocLite("EBImage")
+Message:  
+The downloaded source packages are in ‘/tmp/RtmpblDrPJ/downloaded_packages’ Old packages: 'callr', 'cli', 'commonmark', 'covr', 'data.table', 'digest', 'evaluate', 'fansi', 'htmlwidgets', 'later', 'link2GI', 'maptools','mapview', 'microbenchmark', 'mime', 'packcircles', 'pkgbuild', 'pkgload','R6', 'Rcpp', 'reprex', 'rgrass7', 'rstudioapi', 'spatstat.data' 'spatstat.utils', 'spData', 'testthat', 'tidyselect', 'tinytex', 'tweenr','units', 'webshot', 'xtable', 'xts', 'zoo', 'codetools', 'foreign','lattice', 'spatial' Update all/some/none? [a/s/n]: n
+
+Tried: install.packages("EBImage")
+
+```{r}
+
+library(lidR)
+library(raster)
+library(sf)
+library("RColorBrewer")
+#library("EBImage", lib.loc="C:/Program Files/R/R-3.4.2/library")
+
+```
+
+# import data
+
+```{r}
+
+las <- readLAS("/home/klk/Desktop/Stat/LidR/Data_in/26805_12475.laz")
+baumkataster <- st_read("/home/klk/Desktop/Data/Baumkataster/Baumkataster.shp")
+
+```
+
+# View data
+
+```{r}
+
+View(las)
+
+las@data
+las@header
+las@crs
+
+# look at the data in more detail
+las@data
+las@data$X
+sort(unique(las@data$Classification))
+
+```
+
+# plot data
+
+```{r}
+
+# colour visualizes the height
+plot(las)
+
+# colour visualizes the classifciation
+col = c("red", "orange", "yellow", "lawngreen", "limegreen" ,"cyan","blue", "deeppink", "saddlebrown", "darkviolet", "white", "grey","black")
+plot(las, color = "Classification", colorPalette  = col)
+
+```
+
+# subset data
+
+```{r}
+
+# subset data based on classification
+las_5 <- las@data[which(las@data$Classification %in% c(5)),]
+plot(LAS(las_5))
+
+# subset dat based on height
+sort(las@data$Z, decreasing = TRUE)
+max(las@data$Z)
+min(las@data$Z)
+
+las_s600 <- las@data[which(las@data$Z < 600),]
+plot(LAS(las_s600 ))
+plot(LAS(las_s600 ), color = "Classification", colorPalette  = col)
+
+```
+
+# tree segmentation
+
+```{r}
+
+# Compute a canopy height model
+# https://github.com/Jean-Romain/lidR
+th = c(0,2,5,10,15)
+edge = c(0, 1.5)
+chm = grid_tincanopy(LAS(las_5), thresholds = th, max_edge = edge) 
+plot(chm)
+chm = as.raster(chm)
+raster::plot(chm, col = height.colors(50)) 
+
+# Segment the trees
+# see: https://github.com/Jean-Romain/lidR/wiki/Tree-segmentation-from-A-to-Z
+lastrees(LAS(las_5), "watershed", chm, th = 4)
+tree = lasfilter(LAS(las_5), !is.na(treeID)) # remove points that are not assigned to 
+plot(tree, color = "treeID", colorPalette = pastel.colors(100))
+tree@data
+length(unique(tree@data$treeID))
+
+# return extra output from lastrees
+# see: https://github.com/Jean-Romain/lidR/wiki/Tree-segmentation-from-A-to-Z
+crowns = lastrees(LAS(las_5), "watershed", chm, th = 4, extra = TRUE)
+contour = rasterToPolygons(crowns, dissolve = TRUE)
+contour_sf= st_as_sf(contour, "sf")
+centroid <- st_centroid(contour_sf)
+
+# plot results
+# see: https://github.com/Jean-Romain/lidR/wiki/Tree-segmentation-from-A-to-Z
+plot(chm, col = height.colors(50))
+plot(contour, add = T)
+plot(centroid, add = T, pch= 19, col = "red", cex = 0.1)
+
+plot(LAS(las_5))
+
+```
+
