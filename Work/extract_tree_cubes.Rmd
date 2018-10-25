@@ -57,7 +57,10 @@ st_write(filtered_baumkataster,'filtered_baumkataster.json',driver='GeoJSON')
 ```
 # extract cubes
 ```{r}
-tree_1 <- filtered_coors[100,] 
+
+tree_idx <- 150
+
+tree_1 <- filtered_coors[tree_idx,] 
 tree_buffer <- 10
 
 max_x <- tree_1['X'] + tree_buffer
@@ -68,8 +71,11 @@ min_y <- tree_1['Y'] - tree_buffer
 
 las_tree <- las@data[which(las@data$X < max_x & las@data$X > min_x & las@data$Y > min_y & las@data$Y < max_y & las@data$Z < 450 & las@data$Z > 400 )]
 
-plot(LAS(las_tree))
+las_object <- LAS(las_tree)
 
+plot(las_object)
+
+writeLAS(las_object,paste('tree_las',tree_idx,'.las'))
 ```
 ```{r}
 
