@@ -103,7 +103,7 @@ export_tree <- function(tree_idx, xy_buffer=10, z_buffer=50){
   # find out where the approximate height of the ground is
   ground_points <- las_object@data[which(las_object@data$Classification %in% c(2)),]
   ground_estimate <- mean(ground_points$Z,na.rm=T)
-  print(ground_estimate)
+  print(paste(tree_idx,ground_estimate))
   
   las_pruned <- las_object@data[which(las_object@data$Z < ground_estimate+z_buffer & las_object@data$Z > ground_estimate )]
   
@@ -117,7 +117,7 @@ export_tree <- function(tree_idx, xy_buffer=10, z_buffer=50){
 ```
 
 ```{r}
-for (i in seq(length(filtered_coors))) {
+for (i in seq(nrow(filtered_coors))) {
   export_tree(i)
 }
 ```
