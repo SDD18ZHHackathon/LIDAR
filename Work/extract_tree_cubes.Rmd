@@ -7,12 +7,9 @@ This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
 
-
-#install necessary packages
-```{r}
+#install necessary packages (if necessary)
+```{r, eval=FALSE}
 install.packages('lidR','raster','sf','RColorBrewer')
-source("https://bioconductor.org/biocLite.R")
-biocLite("EBImage")
 ```
 
 # load libraries
@@ -21,7 +18,6 @@ library(lidR)
 library(raster)
 library(sf)
 library(RColorBrewer)
-library(EBImage)
 ```
 
 # load data and save filtered file
@@ -55,8 +51,8 @@ write.csv(filtered_baumkataster,'filtered_baumkataster.csv')
 st_write(filtered_baumkataster,'filtered_baumkataster.st.csv',driver='CSV')
 st_write(filtered_baumkataster,'filtered_baumkataster.json',driver='GeoJSON')
 ```
-# extract cubes
-```{r}
+# extract cube and visualize (example)
+```{r, eval=FALSE}
 
 tree_idx <- 150
 
@@ -77,8 +73,10 @@ las_2 <- las_object@data[which(las@data$Classification %in% c(2)),]
 
 plot(las_object)
 
-writeLAS(las_object,paste('tree_las',tree_idx,'.las'))
+writeLAS(las_object,paste('example_',tree_idx,'.las',sep=""))
 ```
+
+# generate export
 ```{bash}
 mkdir tree_export
 ```
@@ -103,7 +101,7 @@ export_tree <- function(tree_idx, xy_buffer=10, z_buffer=50){
   # find out where the approximate height of the ground is
   ground_points <- las_object@data[which(las_object@data$Classification %in% c(2)),]
   ground_estimate <- mean(ground_points$Z,na.rm=T)
-  print(paste(tree_idx,ground_estimate))
+  print(paste('genererating tree: ',tree_idx,'ground estimate:',ground_estimate))
   
   las_pruned <- las_object@data[which(las_object@data$Z < ground_estimate+z_buffer & las_object@data$Z > ground_estimate )]
   
