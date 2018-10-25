@@ -34,11 +34,14 @@ baumkataster <- st_read("Data/Baumkataster/Baumkataster_2014_12_31/Baumkataster_
 
 ## find boundaries of current LAS import
 # https://github.com/Jean-Romain/lidR/wiki/readLAS
-max_x <- las@header@PHB$`Max X`
-min_x <- las@header@PHB$`Min X`
 
-max_y <- las@header@PHB$`Max Y`
-min_y <- las@header@PHB$`Min Y`
+bounding_box_thr <- 10
+
+max_x <- las@header@PHB$`Max X` - bounding_box_thr
+min_x <- las@header@PHB$`Min X` + bounding_box_thr
+
+max_y <- las@header@PHB$`Max Y` - bounding_box_thr
+min_y <- las@header@PHB$`Min Y` + bounding_box_thr
 
 ## filter coordinates
 tree_coors <- st_coordinates(baumkataster)
@@ -48,7 +51,28 @@ filtered_coors <- tree_coors[filtered_ids,]
 filtered_baumkataster <- baumkataster[filtered_ids,]
 
 # save filtered coordinates as json
+write.csv(filtered_baumkataster,'filtered_baumkataster.csv')
+st_write(filtered_baumkataster,'filtered_baumkataster.st.csv',driver='CSV')
 st_write(filtered_baumkataster,'filtered_baumkataster.json',driver='GeoJSON')
+```
+# extract cubes
+```{r}
+tree_1 <- filtered_coors[100,] 
+tree_buffer <- 10
+
+max_x <- tree_1['X'] + tree_buffer
+min_x <- tree_1['X'] - tree_buffer
+
+max_y <- tree_1['Y'] + tree_buffer
+min_y <- tree_1['Y'] - tree_buffer
+
+las_tree <- las@data[which(las@data$X < max_x & las@data$X > min_x & las@data$Y > min_y & las@data$Y < max_y & las@data$Z < 450 & las@data$Z > 400 )]
+
+plot(LAS(las_tree))
+
+```
+```{r}
+
 ```
 
 
