@@ -77,7 +77,35 @@ plot(las_object)
 
 writeLAS(las_object,paste('tree_las',tree_idx,'.las'))
 ```
+```{bash}
+mkdir tree_export
+```
+
+# export all trees
 ```{r}
+
+export_tree <- function(tree_idx){
+  
+  tree_1 <- filtered_coors[tree_idx,] 
+  tree_buffer <- 10
+  
+  max_x <- tree_1['X'] + tree_buffer
+  min_x <- tree_1['X'] - tree_buffer
+  
+  max_y <- tree_1['Y'] + tree_buffer
+  min_y <- tree_1['Y'] - tree_buffer
+  
+  las_tree <- las@data[which(las@data$X < max_x & las@data$X > min_x & las@data$Y > min_y & las@data$Y < max_y & las@data$Z < 450 & las@data$Z > 400 )]
+  
+  las_object <- LAS(las_tree)
+  
+  writeLAS(las_object,paste('tree_export/',filtered_baumkataster[tree_idx,'OBJECTID'],'.las',sep='')[1])
+
+}
+
+for (i in seq(length(filtered_coors))) {
+  export_tree(i)
+}
 
 ```
 
