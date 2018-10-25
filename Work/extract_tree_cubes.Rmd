@@ -47,8 +47,8 @@ filtered_ids <- which(tree_coors[,1] < max_x & tree_coors[,1] > min_x & tree_coo
 filtered_coors <- tree_coors[filtered_ids,]
 filtered_baumkataster <- baumkataster[filtered_ids,]
 
-# save filtered coordinates as csv
-write.csv(filtered_baumkataster, 'filtered_baumkataster.csv')
+# save filtered coordinates as json
+st_write(filtered_baumkataster,'filtered_baumkataster.json',driver='GeoJSON')
 ```
 
 
