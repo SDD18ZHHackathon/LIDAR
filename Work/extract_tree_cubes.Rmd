@@ -86,35 +86,33 @@ mkdir tree_export
 # export all trees
 ```{r}
 
-export_tree <- function(tree_idx){
+export_tree <- function(tree_idx, xy_buffer=10, z_buffer=50){
   
-  tree_1 <- filtered_coors[tree_idx,] 
-  tree_buffer <- 10
+  tree_coordinates <- filtered_coors[tree_idx,] 
   
-  max_x <- tree_1['X'] + tree_buffer
-  min_x <- tree_1['X'] - tree_buffer
+  max_x <- tree_coordinates['X'] + xy_buffer
+  min_x <- tree_coordinates['X'] - xy_buffer
   
-  max_y <- tree_1['Y'] + tree_buffer
-  min_y <- tree_1['Y'] - tree_buffer
+  max_y <- tree_coordinates['Y'] + xy_buffer
+  min_y <- tree_coordinates['Y'] - xy_buffer
   
-  ground_points <- las_object@data[which(las@data$Classification %in% c(2)),]
-  ground_estimate = mean(las_2$Z,na.rm=T)
-  
-  las_tree <- las@data[which(las@data$X < max_x & las@data$X > min_x & las@data$Y > min_y & las@data$Y < max_y)]# & las@data$Z < 450 & las@data$Z > 400 )]
+  las_tree <- las@data[which(las@data$X < max_x & las@data$X > min_x & las@data$Y > min_y & las@data$Y < max_y)]
   
   las_object <- LAS(las_tree)
   
   # find out where the approximate height of the ground is
-  ground_points <- las_object@data[which(las@data$Classification %in% c(2)),]
-  ground_estimate <- mean(las_2$Z,na.rm=T)
+  ground_points <- las_object@data[which(las_object@data$Classification %in% c(2)),]
+  ground_estimate <- mean(ground_points$Z,na.rm=T)
+  print(ground_estimate)
   
-  las_pruned <- las_object@data[which(las_object@data$Z < ground_estimate+50 & las_object@data$Z > ground_estimate )]
+  las_pruned <- las_object@data[which(las_object@data$Z < ground_estimate+z_buffer & las_object@data$Z > ground_estimate )]
   
   writeLAS(LAS(las_pruned),paste('tree_export/',filtered_baumkataster[tree_idx,'OBJECTID'],'.las',sep='')[1])
 
 }
 
-export_tree(1)
+# example: export_tree(150, 10, 50) 
+# generte las file for tree no. 150 with xy buffer 10 and zbuffer 50
 
 ```
 
