@@ -73,6 +73,8 @@ las_tree <- las@data[which(las@data$X < max_x & las@data$X > min_x & las@data$Y 
 
 las_object <- LAS(las_tree)
 
+las_2 <- las_object@data[which(las@data$Classification %in% c(2)),]
+
 plot(las_object)
 
 writeLAS(las_object,paste('tree_las',tree_idx,'.las'))
@@ -95,18 +97,31 @@ export_tree <- function(tree_idx){
   max_y <- tree_1['Y'] + tree_buffer
   min_y <- tree_1['Y'] - tree_buffer
   
-  las_tree <- las@data[which(las@data$X < max_x & las@data$X > min_x & las@data$Y > min_y & las@data$Y < max_y & las@data$Z < 450 & las@data$Z > 400 )]
+  ground_points <- las_object@data[which(las@data$Classification %in% c(2)),]
+  ground_estimate = mean(las_2$Z,na.rm=T)
+  
+  las_tree <- las@data[which(las@data$X < max_x & las@data$X > min_x & las@data$Y > min_y & las@data$Y < max_y)]# & las@data$Z < 450 & las@data$Z > 400 )]
   
   las_object <- LAS(las_tree)
   
-  writeLAS(las_object,paste('tree_export/',filtered_baumkataster[tree_idx,'OBJECTID'],'.las',sep='')[1])
+  # find out where the approximate height of the ground is
+  ground_points <- las_object@data[which(las@data$Classification %in% c(2)),]
+  ground_estimate <- mean(las_2$Z,na.rm=T)
+  
+  las_pruned <- las_object@data[which(las_object@data$Z < ground_estimate+50 & las_object@data$Z > ground_estimate )]
+  
+  writeLAS(LAS(las_pruned),paste('tree_export/',filtered_baumkataster[tree_idx,'OBJECTID'],'.las',sep='')[1])
 
 }
 
+export_tree(1)
+
+```
+
+```{r}
 for (i in seq(length(filtered_coors))) {
   export_tree(i)
 }
-
 ```
 
 
