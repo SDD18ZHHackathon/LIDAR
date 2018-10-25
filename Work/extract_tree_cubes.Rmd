@@ -1,0 +1,60 @@
+---
+title: "Extract tree cubes"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+
+#install necessary packages
+```{r}
+install.packages('lidR','raster','sf','RColorBrewer')
+source("https://bioconductor.org/biocLite.R")
+biocLite("EBImage")
+```
+
+# load libraries
+```{r}
+library(lidR)
+library(raster)
+library(sf)
+library(RColorBrewer)
+library(EBImage)
+```
+
+# load data and save filtered file
+make sure the Data is in the same directory
+```{r}
+las <- readLAS("Data/LIDAR/26805_12475.laz")
+baumkataster <- st_read("Data/Baumkataster/Baumkataster_2014_12_31/Baumkataster_Ende2014_kbs2056.shp")
+
+# filter coordinates in validation set (baumkataster) 
+
+## find boundaries of current LAS import
+# https://github.com/Jean-Romain/lidR/wiki/readLAS
+max_x <- las@header@PHB$`Max X`
+min_x <- las@header@PHB$`Min X`
+
+max_y <- las@header@PHB$`Max Y`
+min_y <- las@header@PHB$`Min Y`
+
+## filter coordinates
+tree_coors <- st_coordinates(baumkataster)
+
+filtered_ids <- which(tree_coors[,1] < max_x & tree_coors[,1] > min_x & tree_coors[,2] < max_y & tree_coors[,2] > min_y)
+filtered_coors <- tree_coors[filtered_ids,]
+filtered_baumkataster <- baumkataster[filtered_ids,]
+
+# save filtered coordinates as csv
+write.csv(filtered_baumkataster, 'filtered_baumkataster.csv')
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
